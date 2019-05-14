@@ -18,7 +18,6 @@ using System.Windows.Shapes;
 namespace Fortnite {
     public partial class MainWindow : Window {
         private JsonSerializerSettings settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
-        List<Shop> items = new List<Shop>();
         public MainWindow() {
             InitializeComponent();
             loadall();
@@ -28,8 +27,9 @@ namespace Fortnite {
             HttpClient httpClient = new HttpClient();
             var response = await httpClient.GetAsync("https://fortnite-public-api.theapinetwork.com/prod09/store/get");
             string jsonContent = await response.Content.ReadAsStringAsync();
-            items = JsonConvert.DeserializeObject<List<Shop>>(jsonContent, settings);
-            MessageBox.Show(items.ToString());
+            Shop items = JsonConvert.DeserializeObject<Shop>(jsonContent, settings);
+
+            MessageBox.Show(items.vbucks.ToString());
         }
     }
 }
