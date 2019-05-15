@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Fortnite.AllitemsFolder;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,14 +15,25 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Tulpep.NotificationWindow;
 
 namespace Fortnite {
     public partial class MainWindow : Window {
-        private JsonSerializerSettings settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
+        private JsonSerializerSettings settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All, NullValueHandling = NullValueHandling.Ignore };
         Shop items = new Shop();
+        List<Allitems> allitems = new List<Allitems>();
         public MainWindow() {
             InitializeComponent();
             loadall();
+            doPopup();
+        }
+
+        void doPopup() {
+            var popupNotifier = new PopupNotifier();
+            popupNotifier.TitleText = "FortniteAPI";
+            popupNotifier.ContentText = "Your skin is in the shop!";
+            popupNotifier.IsRightToLeft = false;
+            popupNotifier.Popup();
         }
 
         async void loadall() {
@@ -30,11 +42,28 @@ namespace Fortnite {
             string jsonContent = await response.Content.ReadAsStringAsync();
             items = JsonConvert.DeserializeObject<Shop>(jsonContent, settings);
 
+            HttpClient httpClientAll = new HttpClient();
+            var responseAll = await httpClientAll.GetAsync("https://fortnite-public-api.theapinetwork.com/prod09/items/list");
+            string jsonContentAll = await responseAll.Content.ReadAsStringAsync();
+            allitems = JsonConvert.DeserializeObject<List<Allitems>>(jsonContentAll, settings);
+
+            addtocombo();
             addall();
             //MessageBox.Show(items.vbucks.ToString());
         }
 
+        void addtocombo() {
+            foreach (Allitems item in allitems) {
+                AllItemsBox.Items.Add(item.name);
+            }
+        }
+
         void addall() {
+            Label shopdate = new Label();
+            shopdate.Content = items.date;
+            shopdate.Foreground = Brushes.White;
+            HeaderContent.Children.Add(shopdate);
+
             foreach(Item item in items.items) {
                 BitmapImage bmpitemimage = new BitmapImage();
                 bmpitemimage.BeginInit();
