@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Fortnite"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="FortniteAPI" Height="700" Width="900" Top="10" Left="200" Background="#1f1f1f">
     <Grid>
-        
+        <WrapPanel Name="ShopContent" Orientation="Horizontal"/>
     </Grid>
 </Window>
