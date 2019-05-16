@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -22,18 +23,52 @@ namespace Fortnite {
         private JsonSerializerSettings settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All, NullValueHandling = NullValueHandling.Ignore };
         Shop items = new Shop();
         List<Allitems> allitems = new List<Allitems>();
+        List<string> wantitems = new List<string>();
+        List<string> matchinshop = new List<string>();
+        string matches;
+        string path = @"../../wantit.json";
+        bool isInshop = false;
         public MainWindow() {
             InitializeComponent();
+            loadwant();
             loadall();
-            doPopup();
         }
 
         void doPopup() {
+            checkmatch();
             var popupNotifier = new PopupNotifier();
             popupNotifier.TitleText = "FortniteAPI";
-            popupNotifier.ContentText = "Your skin is in the shop!";
+            if (isInshop) {
+                    popupNotifier.ContentText = matches + " is in the shop!";
+            } else {
+                popupNotifier.ContentText = "Your skin is not in the shop!";
+            }
             popupNotifier.IsRightToLeft = false;
             popupNotifier.Popup();
+        }
+
+        void checkmatch() {
+            foreach (string item in matchinshop) {
+                if (matchinshop.Count > 1) {
+                    matches += item + ", ";
+                } else {
+                    matches += item;
+                }
+            }
+        }
+
+        void loadwant() {
+            try {
+                string jsonFromFile = File.ReadAllText(path);
+                if (!String.IsNullOrEmpty(jsonFromFile)) {
+                    wantitems = JsonConvert.DeserializeObject<List<string>>(jsonFromFile, settings);
+                    foreach (string want in wantitems) {
+                        IWantContent.Content += " " + want;
+                    }
+                }
+            } catch ( Exception ) {
+                File.Create(path);
+            }
         }
 
         async void loadall() {
@@ -59,12 +94,17 @@ namespace Fortnite {
         }
 
         void addall() {
-            Label shopdate = new Label();
-            shopdate.Content = items.date;
-            shopdate.Foreground = Brushes.White;
-            HeaderContent.Children.Add(shopdate);
+            Date.Content = items.date;
 
             foreach(Item item in items.items) {
+                try {
+                    foreach (string wantitem in wantitems) {
+                        if (wantitem == item.item.name) {
+                            isInshop = true;
+                            matchinshop.Add(wantitem);
+                        }
+                    }
+                } catch (Exception) { }
                 BitmapImage bmpitemimage = new BitmapImage();
                 bmpitemimage.BeginInit();
                 bmpitemimage.UriSource = new Uri(item.item.image);
@@ -129,6 +169,26 @@ namespace Fortnite {
             }
             //MessageBox.Show(items.vbucks.ToString());
             //MessageBox.Show(items.items[0].item.image.ToString());
+            doPopup();
+        }
+
+        private void AddToWant(object sender, RoutedEventArgs e) {
+            try {
+                string content = AllItemsBox.Text;
+                if (!wantitems.Contains(content)) {
+                    wantitems.Add(content);
+                    IWantContent.Content += " " + content;
+                    string jsonToFile = JsonConvert.SerializeObject(wantitems, settings);
+                    File.WriteAllText(path, jsonToFile);
+                }
+            } catch (Exception) { }       
+        }
+
+        private void RemoveAll(object sender, RoutedEventArgs e) {
+            string jsonToFile = JsonConvert.SerializeObject(null, settings);
+            File.WriteAllText(path, jsonToFile);
+            wantitems.Clear();
+            IWantContent.Content = "";
         }
     }
 }
